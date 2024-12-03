@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import { useWalletStore } from '../store/useWalletStore';
 import { SummaryOverview } from '../components/Dashboard/SummaryOverview';
 import { RecentTransactions } from '../components/Dashboard/RecentTransactions';
 import { WalletPerformance } from '../components/Dashboard/WalletPerformance';
 import { QuickActions } from '../components/Dashboard/QuickActions';
 import { Modal } from '../components/shared/Modal';
 import { AddWalletForm } from '../components/WalletManagement/AddWalletForm';
+import { WalletCard } from '../components/WalletManagement/WalletCard';
 
 export const Dashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const wallets = useWalletStore((state) => state.wallets);
 
   return (
     <div className="space-y-6">
@@ -23,27 +26,28 @@ export const Dashboard = () => {
 
       <SummaryOverview />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <RecentTransactions />
-        </div>
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Portfolio Value</h2>
-            <div className="text-3xl font-bold text-gray-900">
-              {/* Mock total value */}
-              1,234.56 SOL
-            </div>
-            <div className="flex items-center text-green-600 mt-2">
-              <span className="text-sm">+5.2% (24h)</span>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tracked Wallets */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Tracked Wallets</h2>
+          <div className="space-y-4">
+            {wallets
+              .filter(wallet => wallet.isTracked)
+              .map(wallet => (
+                <WalletCard
+                  key={wallet.address}
+                  wallet={wallet}
+                  onEdit={() => {}} // We can implement edit functionality later
+                />
+              ))}
           </div>
         </div>
-      </div>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Wallet Performance</h2>
-        <WalletPerformance />
+        {/* Recent Activity */}
+        <div className="space-y-4">
+          <RecentTransactions />
+          <WalletPerformance />
+        </div>
       </div>
 
       <Modal

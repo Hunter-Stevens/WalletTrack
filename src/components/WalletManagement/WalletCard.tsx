@@ -14,6 +14,7 @@
     const [balances, setBalances] = useState<{ solana: number; solanaUsdValue: number; tokens: any[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const fetchBalances = useCallback(async () => {
       try {
@@ -33,6 +34,12 @@
 
     useEffect(() => {
       fetchBalances();
+
+      // Set up 30-second refresh interval
+      const intervalId = setInterval(fetchBalances, 30000);
+
+      // Cleanup on unmount
+      return () => clearInterval(intervalId);
     }, [fetchBalances]);
 
     const toggleTracking = () => {
@@ -109,7 +116,7 @@
                       <div className="text-right">
                         <p className="font-medium">
                           {balances.solana.toLocaleString(undefined, {
-                            minimumFractionDigits: 4,
+                            minimumFractionDigits: 2,
                             maximumFractionDigits: 9
                           })}
                         </p>
@@ -126,61 +133,74 @@
                   {/* Token Balances */}
                   {balances.tokens.length > 0 && (
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-600">
-                        Tokens ({balances.tokens.length})
-                      </h4>
-                      <div className="grid gap-2">
-                        {balances.tokens.map((token) => (
-                          <div
-                            key={token.mint}
-                            className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-gray-600">
+                          Tokens ({balances.tokens.length})
+                        </h4>
+                        {balances.tokens.length > 3 && (
+                          <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="text-sm text-indigo-600 hover:text-indigo-700"
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                {token.logoURI && (
-                                  <img 
-                                    src={token.logoURI} 
-                                    alt={token.tokenName} 
-                                    className="h-5 w-5 rounded-full"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
-                                  />
-                                )}
+                            {isExpanded ? 'Show Less' : 'Show All'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid gap-2">
+                        {/* Always show top 3 tokens by USD value */}
+                        {balances.tokens
+                          .slice(0, isExpanded ? undefined : 3)
+                          .map((token) => (
+                            <div
+                              key={token.mint}
+                              className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-base">
-                                    {token.name || token.mint.slice(0, 8)}
-                                  </span>
-                                  <a
-                                    href={getSolanaExplorerUrl(token.mint)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-gray-400 hover:text-indigo-600"
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
+                                  {token.logoURI && (
+                                    <img 
+                                      src={token.logoURI} 
+                                      alt={token.tokenName} 
+                                      className="h-5 w-5 rounded-full"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium text-base">
+                                      {token.name || token.mint.slice(0, 8)}
+                                    </span>
+                                    <a
+                                      href={getSolanaExplorerUrl(token.mint)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-gray-400 hover:text-indigo-600"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                </div>
+                                <p className="text-xs font-mono text-gray-400">
+                                  {`${token.mint.slice(0, 8)}...${token.mint.slice(-8)}`}
+                                </p>
+                                <div className="text-right">
+                                  <p className="font-medium">
+                                    {token.balance.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: token.decimals
+                                    })}
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    ${(token.usdValue || 0).toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2
+                                    })}
+                                  </p>
                                 </div>
                               </div>
-                              <p className="text-xs font-mono text-gray-400">
-                                {`${token.mint.slice(0, 8)}...${token.mint.slice(-8)}`}
-                              </p>
-                              <div className="text-right">
-                                <p className="font-medium">
-                                  {(token.uiAmount || 0).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: token.decimals || 9
-                                  })}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                  ${(token.usdValue || 0).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                  })}
-                                </p>
-                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
                       </div>
                     </div>
                   )}

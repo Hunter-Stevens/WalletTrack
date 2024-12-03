@@ -6,6 +6,11 @@ const JUPITER_PRICE_API = 'https://price.jup.ag/v4/price';
 const HELIUS_API_KEY = 'e8ac9ebb-551d-437c-8d4b-f5fd0e56f561';
 const HELIUS_RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const BIRDEYE_API = 'https://public-api.birdeye.so';
+const BIRDEYE_API_KEY = 'e8ac9ebb-551d-437c-8d4b-f5fd0e56f561';
+const RAYDIUM_API = 'https://api.raydium.io/v2';
+const RAYDIUM_PRICE_API = `${RAYDIUM_API}/main/price`;
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
 const connection = new Connection(ALCHEMY_URL, 'confirmed');
 
@@ -39,12 +44,14 @@ interface TokenData {
   usdValue: number;
 }
 
-// Get token price from Jupiter
+// Simplify price fetching to only use Jupiter
 async function getTokenPrice(address: string): Promise<number> {
   try {
     const response = await fetch(`${JUPITER_PRICE_API}?ids=${address}`);
     const data = await response.json();
-    return data.data?.[address]?.price || 0;
+    const price = data.data?.[address]?.price || 0;
+    console.log(`Jupiter price for ${address}:`, price);
+    return price;
   } catch (error) {
     console.error('Error fetching price:', error);
     return 0;
@@ -118,6 +125,22 @@ async function getTokensMetadata(mints: string[], parsedInfos: any[]): Promise<T
   }
 }
 
+// Add retry utility function
+async function retry<T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries === 0) throw error;
+    await new Promise(resolve => setTimeout(resolve, delay));
+    return retry(fn, retries - 1, delay);
+  }
+}
+
+// Update getWalletBalances to use retry and better error handling
 export async function getWalletBalances(address: string): Promise<WalletBalances> {
   try {
     // Get SOL balance using RPC call
@@ -137,50 +160,76 @@ export async function getWalletBalances(address: string): Promise<WalletBalances
     const solData = await solResponse.json();
     const solBalance = solData.result?.value || 0;
     const solDecimals = 9;
-    const solPrice = await getTokenPrice('So11111111111111111111111111111111111111112');
+    const solPrice = await getTokenPrice(SOL_MINT);
+    const solUiAmount = solBalance / Math.pow(10, solDecimals);
 
-    // Get parsed token accounts
-    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-      new PublicKey(address),
-      {
-        programId: TOKEN_PROGRAM_ID
+    console.log('SOL Price:', solPrice);
+    console.log('SOL Balance:', solUiAmount);
+    console.log('SOL USD Value:', solUiAmount * solPrice);
+
+    // Get token accounts with retry
+    const tokenAccounts = await retry(async () => {
+      const response = await fetch(ALCHEMY_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getTokenAccountsByOwner',
+          params: [
+            address,
+            {
+              programId: TOKEN_PROGRAM_ID.toString()
+            },
+            {
+              encoding: 'jsonParsed'
+            }
+          ]
+        })
+      });
+      
+      const data = await response.json();
+      if (!data.result?.value) {
+        throw new Error('Failed to fetch token accounts');
       }
-    );
+      return data.result.value;
+    });
 
-    const filteredAccounts = tokenAccounts.value.filter((item) => {
+    const filteredAccounts = tokenAccounts.filter((item: any) => {
       const parsedInfo = item.account.data.parsed.info;
       return Number(parsedInfo.tokenAmount.amount) > 0;
     });
 
-    const mints = filteredAccounts.map(item => item.account.data.parsed.info.mint);
-    const parsedInfos = filteredAccounts.map(item => item.account.data.parsed.info);
+    const mints = filteredAccounts.map((item: any) => item.account.data.parsed.info.mint);
+    const parsedInfos = filteredAccounts.map((item: any) => item.account.data.parsed.info);
 
     const metadataResults = await getTokensMetadata(mints, parsedInfos);
-    const prices = await Promise.all(mints.map(mint => getTokenPrice(mint)));
+    const prices = await Promise.all(mints.map((mint: string) => getTokenPrice(mint)));
 
-    const tokens = filteredAccounts.map((item, index) => {
+    const tokens = filteredAccounts.map((item: any, index: number) => {
       const parsedInfo = item.account.data.parsed.info;
       const metadata = metadataResults[index];
       const price = prices[index];
 
-      const token = {
+      const tokenAmount = Number(parsedInfo.tokenAmount.amount) / Math.pow(10, parsedInfo.tokenAmount.decimals);
+
+      return {
         mint: parsedInfo.mint,
         symbol: metadata.symbol,
         name: metadata.name,
         decimals: metadata.decimals,
         logoURI: metadata.logoURI,
-        balance: parsedInfo.tokenAmount.uiAmount,
-        usdValue: price * parsedInfo.tokenAmount.uiAmount
+        balance: tokenAmount,
+        usdValue: price * tokenAmount
       } as TokenBalance;
-
-      console.log(`Final Token Data for ${parsedInfo.mint}:`, token);
-      return token;
     });
 
     return {
-      solana: solBalance / Math.pow(10, solDecimals),
-      solanaUsdValue: (solBalance / Math.pow(10, solDecimals)) * solPrice,
-      tokens: tokens.sort((a, b) => b.usdValue - a.usdValue)
+      solana: solUiAmount,
+      solanaUsdValue: solUiAmount * solPrice,
+      tokens: tokens.sort((a: TokenBalance, b: TokenBalance) => b.usdValue - a.usdValue)
     };
   } catch (error) {
     console.error('Error fetching balances:', error);
@@ -190,7 +239,7 @@ export async function getWalletBalances(address: string): Promise<WalletBalances
       tokens: []
     };
   }
-} 
+}
 
 export const validateSolanaAddress = (address: string): boolean => {
   try {
