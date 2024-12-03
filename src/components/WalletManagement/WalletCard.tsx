@@ -13,32 +13,34 @@
     const { removeWallet, updateWallet } = useWalletStore();
     const [balances, setBalances] = useState<{ solana: number; solanaUsdValue: number; tokens: any[] } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
 
     const fetchBalances = useCallback(async () => {
       try {
-        setIsLoading(true);
+        if (balances) {
+          setIsRefreshing(true);
+        } else {
+          setIsLoading(true);
+        }
         setError(null);
+        
         const walletBalances = await getWalletBalances(wallet.address);
         if (!walletBalances) throw new Error('Failed to fetch balances');
         setBalances(walletBalances);
       } catch (err) {
         console.error('Balance fetch error:', err);
         setError('Failed to fetch balances. Please try again.');
-        setBalances(null);
       } finally {
         setIsLoading(false);
+        setIsRefreshing(false);
       }
     }, [wallet.address]);
 
     useEffect(() => {
       fetchBalances();
-
-      // Set up 30-second refresh interval
-      const intervalId = setInterval(fetchBalances, 30000);
-
-      // Cleanup on unmount
+      const intervalId = setInterval(fetchBalances, 60000);
       return () => clearInterval(intervalId);
     }, [fetchBalances]);
 
@@ -69,9 +71,9 @@
                 </div>
                 <button
                   onClick={fetchBalances}
-                  disabled={isLoading}
+                  disabled={isRefreshing}
                   className={`p-1 text-gray-400 hover:text-indigo-600 transition-colors ${
-                    isLoading ? 'animate-spin' : ''
+                    isRefreshing ? 'animate-spin' : ''
                   }`}
                   title="Refresh balances"
                 >

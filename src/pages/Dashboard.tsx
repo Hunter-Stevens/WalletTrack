@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useWalletStore } from '../store/useWalletStore';
-import { SummaryOverview } from '../components/Dashboard/SummaryOverview';
 import { RecentTransactions } from '../components/Dashboard/RecentTransactions';
-import { WalletPerformance } from '../components/Dashboard/WalletPerformance';
 import { QuickActions } from '../components/Dashboard/QuickActions';
 import { Modal } from '../components/shared/Modal';
 import { AddWalletForm } from '../components/WalletManagement/AddWalletForm';
@@ -24,30 +22,31 @@ export const Dashboard = () => {
         <QuickActions onAddWallet={() => setIsAddModalOpen(true)} />
       </div>
 
-      <SummaryOverview />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Tracked Wallets */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Tracked Wallets</h2>
-          <div className="space-y-4">
-            {wallets
-              .filter(wallet => wallet.isTracked)
-              .map(wallet => (
-                <WalletCard
-                  key={wallet.address}
-                  wallet={wallet}
-                  onEdit={() => {}} // We can implement edit functionality later
-                />
-              ))}
+      {/* Tracked Wallets */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Tracked Wallets</h2>
+        <div className="relative">
+          <div className="overflow-x-auto pb-4 hide-scrollbar">
+            <div className="flex space-x-4">
+              {wallets
+                .filter(wallet => wallet.isTracked)
+                .map(wallet => (
+                  <div key={wallet.address} className="w-[400px] flex-shrink-0">
+                    <WalletCard
+                      wallet={wallet}
+                      onEdit={() => {}}
+                    />
+                  </div>
+                ))}
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Recent Activity */}
-        <div className="space-y-4">
-          <RecentTransactions />
-          <WalletPerformance />
-        </div>
+      {/* Recent Transactions */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Recent Transactions</h2>
+        <RecentTransactions />
       </div>
 
       <Modal
