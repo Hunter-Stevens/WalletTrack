@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useWalletStore } from '../../store/useWalletStore';
 import { validateSolanaAddress } from '../../utils/validation';
+import { Wallet } from '../../types/wallet';
 
 interface AddWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedWallet: Wallet | null;
 }
 
-export const AddWalletModal: React.FC<AddWalletModalProps> = ({ isOpen, onClose }) => {
-  const [address, setAddress] = useState('');
-  const [alias, setAlias] = useState('');
+export const AddWalletModal: React.FC<AddWalletModalProps> = ({ isOpen, onClose, selectedWallet }) => {
+  const [address, setAddress] = useState(selectedWallet?.address || '');
+  const [alias, setAlias] = useState(selectedWallet?.alias || '');
   const [error, setError] = useState('');
   const addWallet = useWalletStore((state) => state.addWallet);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useWalletStore } from '../store/useWalletStore';
 import { AddWalletModal } from '../components/WalletManagement/AddWalletModal';
@@ -6,6 +6,7 @@ import { WalletCard } from '../components/WalletManagement/WalletCard';
 import { Wallet } from '../types/wallet';
 
 export const WalletManagement = () => {
+  console.log('WalletManagement rendering');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
   const wallets = useWalletStore((state) => state.wallets);
@@ -53,6 +54,7 @@ export const WalletManagement = () => {
           setIsAddModalOpen(false);
           setSelectedWallet(null);
         }}
+        selectedWallet={selectedWallet}
       />
     </div>
   );

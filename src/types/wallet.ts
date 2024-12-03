@@ -1,7 +1,6 @@
 export interface Wallet {
   address: string;
   alias?: string;
-  balance?: number;
   isTracked: boolean;
 }
 

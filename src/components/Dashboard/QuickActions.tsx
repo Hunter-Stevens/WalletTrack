@@ -8,30 +8,13 @@ interface QuickActionsProps {
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ onAddWallet }) => {
   return (
-    <div className="flex flex-wrap gap-4">
+    <div>
       <button
         onClick={onAddWallet}
-        className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        className="btn-primary"
       >
-        <PlusCircle className="h-5 w-5" />
-        <span>Add Wallet</span>
+        Add Wallet
       </button>
-
-      <Link
-        to="/notifications"
-        className="flex items-center space-x-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-      >
-        <Bell className="h-5 w-5" />
-        <span>Manage Notifications</span>
-      </Link>
-
-      <Link
-        to="/analytics"
-        className="flex items-center space-x-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-      >
-        <LineChart className="h-5 w-5" />
-        <span>View Analytics</span>
-      </Link>
     </div>
   );
 };

@@ -1,41 +1,46 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Wallet, LineChart, Bell, User } from 'lucide-react';
+import { LayoutDashboard, Wallet, Bell, User } from 'lucide-react';
 
 export const Navbar = () => {
   const location = useLocation();
 
   const isActive = (path: string) => {
-    return location.pathname === path ? 'text-indigo-600' : 'text-gray-600 hover:text-indigo-600';
+    return location.pathname === path ? 'text-indigo-600' : 'text-gray-600';
   };
 
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4">
+    <nav className="bg-white shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <Wallet className="h-6 w-6 text-indigo-600" />
-              <span className="font-bold text-xl">Wallet Tracker</span>
+          <div className="flex space-x-8">
+            <Link
+              to="/"
+              className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${isActive('/')}`}
+            >
+              <LayoutDashboard className="h-5 w-5 mr-2" />
+              Dashboard
             </Link>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Link to="/" className={`nav-link ${isActive('/')}`}>
-              <LineChart className="h-5 w-5" />
-              <span>Dashboard</span>
+            <Link
+              to="/wallets"
+              className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${isActive('/wallets')}`}
+            >
+              <Wallet className="h-5 w-5 mr-2" />
+              Wallets
             </Link>
-            <Link to="/wallets" className={`nav-link ${isActive('/wallets')}`}>
-              <Wallet className="h-5 w-5" />
-              <span>Wallets</span>
+            <Link
+              to="/notifications"
+              className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${isActive('/notifications')}`}
+            >
+              <Bell className="h-5 w-5 mr-2" />
+              Notifications
             </Link>
-            <Link to="/notifications" className={`nav-link ${isActive('/notifications')}`}>
-              <Bell className="h-5 w-5" />
-              <span>Notifications</span>
-            </Link>
-            <Link to="/profile" className={`nav-link ${isActive('/profile')}`}>
-              <User className="h-5 w-5" />
-              <span>Profile</span>
+            <Link
+              to="/profile"
+              className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${isActive('/profile')}`}
+            >
+              <User className="h-5 w-5 mr-2" />
+              Profile
             </Link>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { validateSolanaAddress, getWalletBalance } from '../../utils/solana';
+import { validateSolanaAddress, getWalletBalances } from '../../utils/solana';
 import { useWalletStore } from '../../store/useWalletStore';
 
 interface AddWalletFormProps {
@@ -25,16 +25,18 @@ export const AddWalletForm: React.FC<AddWalletFormProps> = ({ onClose }) => {
 
     setIsLoading(true);
     try {
-      const balance = await getWalletBalance(address);
+      await getWalletBalances(address);
       
       addWallet({
         address,
         alias: alias.trim() || undefined,
-        balance,
         isTracked: true,
       });
       
       onClose();
+      setAddress('');
+      setAlias('');
+      setError('');
     } catch (err) {
       setError('Failed to add wallet. Please try again.');
     } finally {
