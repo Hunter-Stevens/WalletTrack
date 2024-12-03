@@ -86,11 +86,28 @@
                   <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <img src="/solana-logo.png" alt="SOL" className="h-5 w-5" />
-                        <span className="font-medium">SOL</span>
+                        <img 
+                          src="https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png" 
+                          alt="SOL" 
+                          className="h-5 w-5 rounded-full"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium">SOL</span>
+                          <a
+                            href={getSolanaExplorerUrl('So11111111111111111111111111111111111111112')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-400 hover:text-indigo-600"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-lg">
+                        <p className="font-medium">
                           {balances.solana.toLocaleString(undefined, {
                             minimumFractionDigits: 4,
                             maximumFractionDigits: 9
